@@ -1,34 +1,52 @@
-# Sensitive mappings (NEVER COMMIT)
-data/processed/id_mapping_private.csv
+# ----------------------------
+# OS / IDE
+# ----------------------------
+.DS_Store
+.vscode/
+.idea/
 
-# Private research files (NEVER COMMIT)
-private_research_files/
+# ----------------------------
+# Python
+# ----------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
 
-# Raw identifiable data
+# Virtual environments
+.venv/
+venv/
+.env/
+conda_envs/
+
+# ----------------------------
+# Data privacy (CRITICAL)
+# ----------------------------
+# Raw identifiable data must never be committed
 data/raw/
 
-# Private / identifiable data
-id_mapping_private.csv
+# Private mapping / re-identification files must never be committed
+private_research_files/
 *id_mapping*
 *mapping_private*
+id_mapping_private.csv
+data/processed/id_mapping_private.csv
 
-# LaTeX build artefacts
+# ----------------------------
+# LaTeX build artifacts (docs)
+# ----------------------------
 *.aux
 *.log
 *.out
 *.toc
 *.synctex.gz
+*.fls
+*.fdb_latexmk
 
-# Python
-__pycache__/
-*.py[cod]
-
-# Environments
-.env/
-.venv/
-conda_envs/
-
-# OS / IDE
+# ----------------------------
+# Other
+# ----------------------------
 .DS_Store
-.vscode/
-.idea/
