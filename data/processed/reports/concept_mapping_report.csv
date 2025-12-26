@@ -1,0 +1,7 @@
+concept,pre_mean,post_mean,mean_gain,pre_mean_out_of_5,post_mean_out_of_2,spearman_corr,post_mean_out_of_3,mean_gain_raw
+Seasons & tilt (Q1 → P3i),0.49333333333333335,0.7466666666666667,0.25333333333333335,,,,,
+Working of astronomers (Q4 → P3ii),0.4866666666666667,0.6666666666666666,0.18,,,,,
+Asteroids (Q7 → P1),0.28,0.8866666666666667,0.6066666666666667,,,,,
+Planets block (Q5+Q6+Q8+Q9+Q10 → P2),,,,2.6666666666666665,1.34,0.15378451864857431,,
+Phases of Moon (Q2 → P5),0.46,,,,,,2.0533333333333332,1.5933333333333333
+Luminosity / stars vs planets (Q3 → P4),0.38666666666666666,,,,1.7466666666666666,,,1.36
