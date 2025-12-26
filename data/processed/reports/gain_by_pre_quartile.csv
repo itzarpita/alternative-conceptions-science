@@ -1,0 +1,7 @@
+,normalized_gain,normalized_gain,normalized_gain,gain,gain
+,mean,std,count,mean,std
+pre_quartile,,,,,
+Q1,0.576,0.29,70,3.814,1.926
+Q2,0.494,0.374,31,2.468,1.871
+Q3,0.391,0.389,23,1.565,1.554
+Q4,0.224,0.687,26,0.788,1.745

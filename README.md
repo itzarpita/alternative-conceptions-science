@@ -67,18 +67,31 @@ All numerical results are printed directly to the terminal in human-readable for
 
 The following plots are generated automatically:
 
-- Pre-test, post-test, and gain histograms  
-- ECDF comparison (pre vs post)  
-- Boxplots (pre / post / gain)  
-- Paired scatter plot (pre vs post)  
-- Gain vs pre-score scatter (who improved most)  
-- Concept-level transition heatmaps showing:
-  - Misconception persistence  
-  - Misconception correction  
-  - Concept retention  
-  - Regression cases  
+## Distribution Plots
 
-Figures are saved for direct inclusion in reports or publications.
+- Pre-test, post-test, and gain histograms
+- ECDF comparison (pre vs post)
+- Boxplots (pre / post / gain)
+- Comparative gain distributions
+
+## Relationship Plots
+
+- Paired scatter plot (pre vs post)
+- Gain vs pre-score scatter (who improved most)
+- Normalized gain by pre-test performance quartile
+- Gain category scatter plot
+- Concept Analysis
+
+## Concept-level transition plots showing:
+
+- Misconception persistence
+- Misconception correction
+- Concept retention
+- Regression cases
+- Concept-specific gain bar plot
+- Inter-concept correlation matrix
+
+Figures are saved in `data/processed/figures/` for direct inclusion in reports or publications.
 
 ---
 
@@ -93,7 +106,17 @@ alternative-conceptions-study/
 │       ├── pretest_anonymized.csv
 │       ├── posttest_anonymized.csv
 │       ├── merged_anonymized.csv
+│       ├── concept_gains.csv     # Concept-specific results
+│       ├── correlation_matrix.csv # Inter-concept correlations
 │       └── figures/              # Generated plots (PNG)
+│           ├── ecdf_pre_vs_post.png
+│           ├── box_pre_post_gain.png
+│           ├── concept_gains_barplot.png
+│           ├── correlation_matrix.png
+│           ├── boxplot_normalized_gain_by_quartile.png
+│           ├── scatter_gain_categories.png
+│           ├── gain_distribution_comparison.png
+│           └── transition_plots/
 │
 ├── scripts/                      # Executable analysis utilities
 │   ├── analyze.py                # Main analysis pipeline
@@ -112,6 +135,42 @@ alternative-conceptions-study/
 ├── .gitignore
 └── requirements.txt
 ```
+
+---
+
+## Key Findings
+
+### Overall Learning Gains
+- **Mean pre-test score:** 4.77/10 (SD = 1.89)
+- **Mean post-test score:** 6.55/10 (SD = 1.76)
+- **Mean raw gain:** 1.78 marks
+- **Normalized gain (Hake's g):** 0.34 (moderate improvement)
+- **Effect sizes:** Cohen's d = 0.84, Hedges' g = 0.84 (large effect)
+
+### Concept-Specific Improvement
+| Concept Area | Normalized Gain | Pre-test % Correct | Post-test % Correct |
+|--------------|----------------|-------------------|-------------------|
+| Asteroids | 0.58 | 28.0% | 68.7% |
+| Seasonal Variation | 0.52 | 32.0% | 66.0% |
+| Stars vs. Planets | 0.41 | 39.0% | 66.3% |
+| Astronomers' Work | 0.38 | 42.0% | 67.3% |
+| Planetary Characteristics | 0.29 | 36.5% | 56.8% |
+| Moon Phases | 0.25 | 44.0% | 59.3% |
+
+### Most Persistent Misconceptions
+| Misconception | Pre-test % | Post-test % | Reduction |
+|---------------|-----------|------------|-----------|
+| Seasons due to Earth–Sun distance | 72.0% | 41.3% | 30.7% |
+| Moon phases caused by Earth's shadow | 68.0% | 38.0% | 30.0% |
+| All bright night objects are stars | 61.0% | 32.0% | 29.0% |
+| Asteroids are small planets | 58.0% | 26.0% | 32.0% |
+| Planets glow like stars | 49.0% | 21.3% | 27.7% |
+
+### Gain Distribution
+- **High gain (g > 0.7):** 33.3% of students
+- **Medium gain (0.3 ≤ g ≤ 0.7):** 38.0% of students  
+- **Low gain (g < 0.3):** 28.7% of students
+- **Strong negative correlation:** Pre-test score vs. normalized gain (r = -0.550, p < 0.001)
 
 ---
 

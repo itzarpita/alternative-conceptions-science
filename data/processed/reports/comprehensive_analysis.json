@@ -1,0 +1,60 @@
+{
+  "descriptive_statistics": {
+    "pre_mean": 4.773333333333333,
+    "pre_median": 5.0,
+    "pre_std": 1.6101467967036804,
+    "post_mean": 7.44,
+    "post_median": 7.5,
+    "post_std": 1.8608650654860253,
+    "mean_gain": 2.6666666666666665,
+    "median_gain": 2.75,
+    "gain_std": 2.172638474720185
+  },
+  "inferential_statistics": {
+    "n_students": 150,
+    "t_statistic": 15.032350580699035,
+    "p_value": 1.1540248007020383e-31,
+    "wilcoxon_statistic": 449.5,
+    "wilcoxon_p": 6.979752286594611e-22,
+    "cohens_d": 1.2273862852447681,
+    "hedges_g": 1.221197782966223,
+    "improved_count": 132,
+    "improved_pct": 88.0,
+    "same_count": 4,
+    "same_pct": 2.666666666666667,
+    "declined_count": 14,
+    "declined_pct": 9.333333333333334
+  },
+  "correlation_analysis": {
+    "pearson_pre_post": {
+      "correlation": 0.22278288889916922,
+      "p_value": 0.006139759210855152
+    },
+    "pearson_pre_gain": {
+      "correlation": -0.5502884697451288,
+      "p_value": 2.997078927201771e-13
+    },
+    "pearson_post_gain": {
+      "correlation": 0.691395245017972,
+      "p_value": 1.1999791018552482e-22
+    },
+    "spearman_pre_post": {
+      "correlation": 0.2039004819731305,
+      "p_value": 0.012324290608018342
+    },
+    "spearman_pre_gain": {
+      "correlation": -0.538127438437721,
+      "p_value": 1.2314729718659485e-12
+    }
+  },
+  "normalized_gain_analysis": {
+    "mean_normalized_gain": 0.4698174603174603,
+    "median_normalized_gain": 0.53125,
+    "high_gain_count": 50,
+    "high_gain_pct": 33.33333333333333,
+    "medium_gain_count": 57,
+    "medium_gain_pct": 38.0,
+    "low_gain_count": 43,
+    "low_gain_pct": 28.666666666666668
+  }
+}
