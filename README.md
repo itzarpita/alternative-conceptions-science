@@ -144,3 +144,15 @@ This repository is intended for:
 ## License
 
 This repository is released under the MIT License. See LICENSE for details.
+
+---
+
+## Citation and DOI
+
+This repository is archived on Zenodo and assigned a DOI for citation and long-term preservation.
+
+**DOI:** https://doi.org/10.5281/zenodo.18060218
+
+This DOI corresponds to the version used for **manuscript submission** and supports reproducibility and peer review.
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18060218.svg)](https://doi.org/10.5281/zenodo.18060218)
