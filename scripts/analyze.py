@@ -3,6 +3,8 @@ import numpy as np
 import argparse
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import stats
 import os, sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from altconceptions.io import load_and_standardize
@@ -61,7 +63,43 @@ def main(pre_path, post_path, out_dir):
     pre_anon["pre_total"] = recompute_total(pre_anon, pre_items)
     post_anon["post_total"] = recompute_total(post_anon, post_items)
 
+    # Defaults (avoid unbound locals if any downstream block is refactored)
+    mean_normalized_gain_individual = np.nan
+    mean_normalized_gain_class = np.nan
+    r_pre_norm, p_pre_norm = np.nan, np.nan
+
     merged = pd.merge(pre_anon, post_anon, on="participant_id")
+
+    merged["pre_total"] = pd.to_numeric(merged["pre_total"], errors="coerce")
+    merged["post_total"] = pd.to_numeric(merged["post_total"], errors="coerce")
+    merged = merged.dropna(subset=["pre_total", "post_total"])
+    
+    # Ensure gain exists early for downstream use
+    merged["gain"] = merged["post_total"] - merged["pre_total"]
+
+    # --- Normalized gain (Hake): compute ONCE early so it is available everywhere ---
+    denom = (10 - merged["pre_total"]).replace(0, np.nan)
+    normalized_gains = (merged["post_total"] - merged["pre_total"]) / denom
+    merged["normalized_gain"] = normalized_gains
+
+    # Pre-test performance quartiles (used in Fig: normalized gain by quartile + reviewer-proof checks)
+    # pd.qcut produces ~equal-sized groups; with N=150 this will be 37/38 per quartile.
+    # Tie-safe quartiles: rank breaks ties so groups are ~equal size (37/38 for N=150)
+    merged["_pre_rank"] = merged["pre_total"].rank(method="first")
+    merged["pre_quartile"] = pd.qcut(merged["_pre_rank"], 4, labels=["Q1", "Q2", "Q3", "Q4"])
+
+    # Two common summaries of normalized gain
+    mean_normalized_gain_individual = float(np.nanmean(normalized_gains))
+    pre_mean = float(np.nanmean(merged["pre_total"]))
+    post_mean = float(np.nanmean(merged["post_total"]))
+    mean_normalized_gain_class = float((post_mean - pre_mean) / (10 - pre_mean)) if (10 - pre_mean) != 0 else np.nan
+
+    # Correlation: pre_total vs normalized_gain
+    _ng = merged[["pre_total", "normalized_gain"]].dropna()
+    if len(_ng) >= 3:
+        r_pre_norm, p_pre_norm = stats.pearsonr(_ng["pre_total"], _ng["normalized_gain"])
+    else:
+        r_pre_norm, p_pre_norm = np.nan, np.nan
 
     pre_item = item_analysis(pre_anon[pre_items])
     post_item = item_analysis(post_anon[post_items])
@@ -89,9 +127,11 @@ def main(pre_path, post_path, out_dir):
     save_hist_with_stats(pre_anon["pre_total"], os.path.join(figs, "pre_total_hist.png"), "Pre-test Total", bins=10)
     save_hist_with_stats(post_anon["post_total"], os.path.join(figs, "post_total_hist.png"), "Post-test Total", bins=10)
 
-    gain = merged["post_total"] - merged["pre_total"]
-    merged["gain"] = gain  # Add gain column to merged DataFrame
-    
+    # Raw gain (ensure column exists)
+    if "gain" not in merged.columns:
+        merged["gain"] = merged["post_total"] - merged["pre_total"]
+    gain = merged["gain"]
+
     save_hist_with_stats(gain, os.path.join(figs, "gain_hist.png"), "Learning Gain (Post − Pre)", bins=10)
 
     # --- Boxplots (quick story) ---
@@ -111,6 +151,11 @@ def main(pre_path, post_path, out_dir):
         title="ECDF: Pre vs Post Totals",
         xlabel="Total marks"
     )
+
+    # Ensure gain column exists (guard for code refactoring)
+    if "gain" not in merged.columns:
+        merged["gain"] = merged["post_total"] - merged["pre_total"]
+    gain = merged["gain"]
 
     # --- Paired relationship plots ---
     save_pre_post_paired_scatter(
@@ -173,7 +218,11 @@ def main(pre_path, post_path, out_dir):
             'pre_test_mean', 'pre_test_std', 'post_test_mean', 'post_test_std',
             'mean_gain', 't_statistic', 'p_value', 'cohens_d', 'hedges_g',
             'improved_pct', 'same_pct', 'declined_pct',
-            'normalized_gain_mean', 'correlation_pre_gain'
+            'normalized_gain_mean_individual',
+            'normalized_gain_mean_class',
+            'correlation_pre_gain',
+            'correlation_pre_normalized_gain',
+            'p_value_pre_normalized_gain'
         ],
         'value': [
             comprehensive_report['descriptive_statistics']['pre_mean'],
@@ -188,8 +237,11 @@ def main(pre_path, post_path, out_dir):
             comprehensive_report['inferential_statistics']['improved_pct'],
             comprehensive_report['inferential_statistics']['same_pct'],
             comprehensive_report['inferential_statistics']['declined_pct'],
-            comprehensive_report['normalized_gain_analysis']['mean_normalized_gain'],
-            comprehensive_report['correlation_analysis']['pearson_pre_gain']['correlation']
+            mean_normalized_gain_individual,
+            mean_normalized_gain_class,
+            comprehensive_report['correlation_analysis']['pearson_pre_gain']['correlation'],
+            float(r_pre_norm),
+            float(p_pre_norm)
         ]
     })
     summary_df.to_csv(os.path.join(reports, "statistical_summary.csv"), index=False)
@@ -208,7 +260,15 @@ def main(pre_path, post_path, out_dir):
     concept_results.to_csv(os.path.join(reports, "concept_level_analysis_detailed.csv"), index=False)
 
     # Print enhanced summary
-    print_enhanced_summary(comprehensive_report, concept_results)
+    print_enhanced_summary(
+        comprehensive_report,
+        concept_results,
+        mean_normalized_gain_individual=mean_normalized_gain_individual,
+        mean_normalized_gain_class=mean_normalized_gain_class,
+        r_pre_norm=r_pre_norm,
+        p_pre_norm=p_pre_norm,
+        merged=merged,
+    )
 
     print_terminal_summary(
         pre_anon["pre_total"].mean(),
@@ -218,46 +278,95 @@ def main(pre_path, post_path, out_dir):
         pre_item,
         concept
     )
-    
-    # Define concept pairs
-    concept_pairs_enhanced = [
-        ("Seasons & tilt", "Q1", "P3i"),
-        ("Working of astronomers", "Q4", "P3ii"),
-        ("Asteroids", "Q7", "P1"),
-        ("Planets block", ["Q5", "Q6", "Q8", "Q9", "Q10"], "P2"),
-        ("Phases of Moon", "Q2", "P5"),
-        ("Luminosity / stars vs planets", "Q3", "P4")
-    ]
-    
-    # Run concept analysis
-    concept_results = concept_level_analysis(merged, concept_pairs_enhanced)
-    concept_results.to_csv(os.path.join(reports, "concept_level_analysis_detailed.csv"), index=False)
-    
-    # Save concept gains bar plot
-    save_concept_gains_barplot(
-        concept_results,
-        os.path.join(figs, "concept_gains_barplot.png"),
-        "Concept-Specific Learning Gains"
-    )
-    
-    # Calculate normalized gains for distribution plot
-    normalized_gains = (merged["post_total"] - merged["pre_total"]) / (10 - merged["pre_total"])
+    # --- Cleaner concept gains plot (reviewer-friendly) ---
+    def _col(df, *candidates):
+        for c in candidates:
+            if c in df.columns:
+                return c
+        raise ValueError(f"None of {candidates} found in columns: {df.columns.tolist()}")
 
-    #Add normalized_gain to merged DataFrame
-    merged["normalized_gain"] = normalized_gains
-    
-    # Save gain distribution plot
-    save_gain_distribution_plot(
-        gain,
-        normalized_gains,
-        os.path.join(figs, "gain_distribution_comparison.png"),
-        "Distribution of Raw and Normalized Learning Gains"
+    c_concept = _col(concept_results, "concept")
+
+    # concept_level_analysis outputs should be pre_mean/post_mean/mean_gain, but we also
+    # tolerate older/alternative column names to avoid silently falling back to the old plot.
+    c_pre = _col(
+        concept_results,
+        "pre_mean", "pre",
+        "pre_mean_out_of_5", "pre_mean_out_of_3", "pre_mean_out_of_2"
     )
-    
-    # Save correlation matrix
+    c_post = _col(
+        concept_results,
+        "post_mean", "post",
+        "post_mean_out_of_5", "post_mean_out_of_3", "post_mean_out_of_2"
+    )
+    c_delta = _col(concept_results, "mean_gain", "delta", "gain", "mean_gain_raw")
+    c_p = _col(concept_results, "p_value", "p")
+
+    labels = concept_results[c_concept]
+    pre_vals = concept_results[c_pre]
+    post_vals = concept_results[c_post]
+    deltas = concept_results[c_delta]
+    pvals = concept_results[c_p] if c_p in concept_results.columns else [np.nan]*len(labels)
+
+    x = np.arange(len(labels))
+    width = 0.36
+
+    # Larger canvas + more bottom margin for wrapped labels
+    plt.figure(figsize=(13.5, 6.5))
+    plt.bar(x - width/2, pre_vals, width, label="Pre-test", alpha=0.65)
+    plt.bar(x + width/2, post_vals, width, label="Post-test", alpha=0.65)
+
+    # Add headroom so Δ and significance markers never collide with the legend or top border
+    _ymax = float(np.nanmax([np.nanmax(pre_vals), np.nanmax(post_vals)]))
+    plt.ylim(0, _ymax + 0.6)
+
+    plt.ylabel("Mean score")
+    plt.xlabel("Concept area")
+    # Wrapped labels are readable without steep rotation
+    plt.xticks(x, labels, rotation=0, ha="center")
+
+    # Annotate gain (Δ) label only (no significance stars; keep plot uncluttered)
+    for i, (pre, post, delta, p) in enumerate(zip(pre_vals, post_vals, deltas, pvals)):
+        mx = max(pre, post)
+        y_delta = mx + 0.08
+        # Δ label (keep the plot uncluttered; p-values are reported in the text/table)
+        plt.text(i, y_delta, f"Δ={delta:.2f}", ha="center", va="bottom", fontsize=11, color="black")
+
+    # Put legend above the plotting area so it never hides bars/annotations
+    plt.legend(loc="upper center", bbox_to_anchor=(0.5, 1.18), ncol=2, frameon=True)
+    plt.tight_layout(rect=[0, 0, 1, 0.90])
+    plt.savefig(os.path.join(figs, "concept_gains_barplot.png"), dpi=300)
+    plt.close()
+
+    # Save normalized-gain distribution plot (Hake) -- single panel (no raw-gain duplication)
+    _ng = merged["normalized_gain"].dropna().astype(float)
+
+    plt.figure(figsize=(9, 5.5))
+    plt.hist(_ng, bins=20, alpha=0.6, edgecolor="black")
+
+    # Hake thresholds
+    plt.axvline(0.3,     color='#1a6faf', linestyle='--',  linewidth=2.0, label=r"Medium gain ($g = 0.3$)")
+    plt.axvline(0.7,     color='#c0392b', linestyle='-.',  linewidth=2.0, label=r"High gain ($g = 0.7$)")
+
+    # Mean line
+    ng_mean = float(np.nanmean(_ng)) if len(_ng) else np.nan
+    if not np.isnan(ng_mean):
+        plt.axvline(ng_mean, color='black',   linestyle=':',   linewidth=2.2,
+           label=rf"Mean $\bar{{g}} = {ng_mean:.3f}$")
+
+    plt.xlabel("Normalized gain (g)")
+    plt.ylabel("Frequency")
+    # No title here; keep it for the LaTeX caption to avoid redundancy.
+    plt.legend(loc="upper left", frameon=True)
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(os.path.join(figs, "gain_distribution_comparison.png"), dpi=300)
+    plt.close()
+
+    # Save correlation matrix (make figure + colorbar readable in the paper)
     pre_items = [c for c in pre_anon.columns if c.startswith("Q")]
     post_items = [c for c in post_anon.columns if c.startswith("P")]
-    
+
     # Create merged dataframe with all items
     merged_all_items = pd.merge(
         pre_anon[["participant_id"] + pre_items + ["pre_total"]],
@@ -265,18 +374,49 @@ def main(pre_path, post_path, out_dir):
         on="participant_id"
     )
     merged_all_items["gain"] = merged_all_items["post_total"] - merged_all_items["pre_total"]
-    
-    # Save correlation matrix (only if not too many items)
-    if len(pre_items) + len(post_items) <= 20:  # Limit for readability
-        save_correlation_matrix(
-            merged_all_items,
-            pre_items,
-            post_items,
-            os.path.join(figs, "correlation_matrix.png")
+
+    # Keep matrix readable: totals + items + gain
+    corr_cols = ["pre_total", "post_total"] + pre_items + post_items + ["gain"]
+    corr_cols = [c for c in corr_cols if c in merged_all_items.columns]
+
+    # Only render if size is manageable for a single-page figure
+    if len(corr_cols) <= 22:
+        corr = merged_all_items[corr_cols].corr(method="pearson")
+
+        # Wider figure and a full-height colorbar axis so the colorbar is not squashed.
+        fig = plt.figure(figsize=(14, 10))
+        ax = fig.add_axes([0.08, 0.08, 0.72, 0.84])  # main heatmap area
+        cax = fig.add_axes([0.83, 0.12, 0.03, 0.76])  # full-height colorbar
+
+        sns.heatmap(
+            corr,
+            ax=ax,
+            cbar=True,
+            cbar_ax=cax,
+            vmin=-1,
+            vmax=1,
+            center=0,
+            cmap="RdBu_r",
+            annot=True,
+            fmt=".2f",
+            annot_kws={"size": 8},
+            linewidths=0.2,
+            linecolor="white",
+            square=True
         )
-    
+
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=90, ha="center")
+        ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
+
+        ax.set_title("Correlation matrix of test scores and items")
+        ax.tick_params(axis="x", rotation=90)
+        ax.tick_params(axis="y", rotation=0)
+
+        fig.savefig(os.path.join(figs, "correlation_matrix.png"), dpi=300)
+        plt.close(fig)
+
     # --- Additional insightful scatter plots ---
-    
+
     # 1. Gain vs normalized gain
     save_scatter(
         merged["pre_total"],
@@ -286,35 +426,38 @@ def main(pre_path, post_path, out_dir):
         xlabel="Pre-test total",
         ylabel="Normalized gain ⟨g⟩"
     )
-    
+
     # 2. Post vs pre with performance categories
     def categorize_gain(pre, post):
-        normalized = (post - pre) / (10 - pre)
+        denom = (10 - pre)
+        if denom == 0:
+            return "Low gain"
+        normalized = (post - pre) / denom
         if normalized > 0.7:
             return "High gain"
         elif normalized >= 0.3:
             return "Medium gain"
         else:
             return "Low gain"
-    
+
     merged["gain_category"] = merged.apply(
         lambda row: categorize_gain(row["pre_total"], row["post_total"]), axis=1
     )
-    
+
     # Save this categorized scatter
     plt.figure(figsize=(8, 6))
     colors = {"High gain": "green", "Medium gain": "orange", "Low gain": "red"}
-    
+
     for category, color in colors.items():
         subset = merged[merged["gain_category"] == category]
-        plt.scatter(subset["pre_total"], subset["post_total"], 
+        plt.scatter(subset["pre_total"], subset["post_total"],
                    c=color, label=category, alpha=0.7, s=50)
-    
+
     # Add equality line
     mn = min(merged["pre_total"].min(), merged["post_total"].min())
     mx = max(merged["pre_total"].max(), merged["post_total"].max())
     plt.plot([mn, mx], [mn, mx], 'k--', alpha=0.5, label='No change')
-    
+
     plt.xlabel("Pre-test total")
     plt.ylabel("Post-test total")
     plt.title("Pre vs Post Scores with Gain Categories")
@@ -323,23 +466,24 @@ def main(pre_path, post_path, out_dir):
     plt.tight_layout()
     plt.savefig(os.path.join(figs, "scatter_gain_categories.png"), dpi=300)
     plt.close()
-    
+
     # 3. Boxplot of normalized gains by pre-test quartile
-    merged["pre_quartile"] = pd.qcut(merged["pre_total"], 4, labels=["Q1", "Q2", "Q3", "Q4"])
-    
+    # merged["pre_quartile"] = pd.qcut(merged["pre_total"], 4, labels=["Q1", "Q2", "Q3", "Q4"])  # Already computed above
+
     plt.figure(figsize=(10, 6))
     data = [merged[merged["pre_quartile"] == q]["normalized_gain"] for q in ["Q1", "Q2", "Q3", "Q4"]]  # NOW CORRECT
     plt.boxplot(data, labels=["Lowest 25%", "25-50%", "50-75%", "Highest 25%"])
+    plt.xlabel("Pre-test performance quartile")
     plt.axhline(y=0.3, color='orange', linestyle='--', alpha=0.5, label='Medium gain threshold')
     plt.axhline(y=0.7, color='green', linestyle='--', alpha=0.5, label='High gain threshold')
-    plt.ylabel("Normalized Gain ⟨g⟩")
-    plt.title("Normalized Gain Distribution by Pre-test Performance Quartile")
+    plt.ylabel("Normalized gain (g)")
+    # Removed title to avoid redundancy with caption
     plt.legend()
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.savefig(os.path.join(figs, "boxplot_normalized_gain_by_quartile.png"), dpi=300)
     plt.close()
-    
+
     # Save the quartile analysis to CSV
     quartile_summary = merged.groupby("pre_quartile").agg({
         "normalized_gain": ["mean", "std", "count"],
@@ -347,7 +491,33 @@ def main(pre_path, post_path, out_dir):
     }).round(3)
     quartile_summary.to_csv(os.path.join(reports, "gain_by_pre_quartile.csv"))
 
-def print_enhanced_summary(comprehensive_report, concept_results):
+def print_enhanced_summary(comprehensive_report, concept_results, *, mean_normalized_gain_individual=np.nan, mean_normalized_gain_class=np.nan, r_pre_norm=np.nan, p_pre_norm=np.nan, merged=None):
+    # --- Additional reviewer-proof checks ---
+    print("\nADDITIONAL CHECKS")
+    print("-"*70)
+    try:
+        print(f"Mean normalized gain (mean of individual g_i): {float(mean_normalized_gain_individual):.3f}")
+    except Exception:
+        print("Mean normalized gain (mean of individual g_i): NA")
+    try:
+        print(f"Mean normalized gain (class-average from means): {float(mean_normalized_gain_class):.3f}")
+    except Exception:
+        print("Mean normalized gain (class-average from means): NA")
+    try:
+        print(f"Correlation pre-test vs normalized gain: r = {float(r_pre_norm):.3f}, p = {float(p_pre_norm):.4f}")
+    except Exception:
+        print("Correlation pre-test vs normalized gain: NA")
+
+    # Quartile verification (based on pre-test total)
+    if isinstance(merged, pd.DataFrame) and ("pre_quartile" in merged.columns):
+        q_sizes = merged["pre_quartile"].value_counts().sort_index()
+        print("\nPre-test quartile sizes (pd.qcut on pre_total):")
+        print(q_sizes.to_string())
+
+        q_medians = merged.groupby("pre_quartile")["normalized_gain"].median().sort_index()
+        print("\nMedian normalized gain by quartile:")
+        print(q_medians.to_string())
+
     """Print enhanced terminal summary with statistical significance"""
     print("="*70)
     print("ENHANCED DATA ANALYSIS SUMMARY")

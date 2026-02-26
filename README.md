@@ -141,21 +141,27 @@ alternative-conceptions-study/
 ## Key Findings
 
 ### Overall Learning Gains
-- **Mean pre-test score:** 4.77/10 (SD = 1.89)
-- **Mean post-test score:** 6.55/10 (SD = 1.76)
-- **Mean raw gain:** 1.78 marks
-- **Normalized gain (Hake's g):** 0.34 (moderate improvement)
-- **Effect sizes:** Cohen's d = 0.84, Hedges' g = 0.84 (large effect)
+- **Mean pre-test score:** 4.77/10 (SD = 1.61)
+- **Mean post-test score:** 7.44/10 (SD = 1.86)
+- **Mean raw gain (post − pre):** 2.67 marks (SD = 2.17)
+- **Mean normalized gain (Hake’s \(\bar{g}\), mean of individual \(g_i\)):** 0.47
+- **Effect sizes (paired):** Cohen’s d = 1.23, Hedges’ g = 1.22
 
-### Concept-Specific Improvement
-| Concept Area | Normalized Gain | Pre-test % Correct | Post-test % Correct |
-|--------------|----------------|-------------------|-------------------|
-| Asteroids | 0.58 | 28.0% | 68.7% |
-| Seasonal Variation | 0.52 | 32.0% | 66.0% |
-| Stars vs. Planets | 0.41 | 39.0% | 66.3% |
-| Astronomers' Work | 0.38 | 42.0% | 67.3% |
-| Planetary Characteristics | 0.29 | 36.5% | 56.8% |
-| Moon Phases | 0.25 | 44.0% | 59.3% |
+### Student Outcomes
+- **Improved:** 132 students (88.0%)
+- **No change:** 4 students (2.7%)
+- **Declined:** 14 students (9.3%)
+
+### Concept-Level Change (selected mappings)
+The instrument spans multiple concepts and uses mixed-mark post-test items; the values below summarize the **mean** performance change for each mapped concept block.
+
+| Concept Area | Pre (mean) | Post (mean) | Mean change |
+|---|---:|---:|---:|
+| Seasons & tilt (Q1 → P3i) | 0.493 | 0.747 | +0.253 |
+| Working of astronomers (Q4 → P3ii) | 0.487 | 0.667 | +0.180 |
+| Asteroids (Q7 → P1) | 0.280 | 0.887 | +0.607 |
+| Phases of Moon (Q2 → P5; out of 3) | 0.460 | 2.053 | +1.593 |
+| Luminosity / stars vs planets (Q3 → P4; out of 2) | 0.387 | 1.747 | +1.360 |
 
 ### Most Persistent Misconceptions
 | Misconception | Pre-test % | Post-test % | Reduction |
@@ -166,11 +172,11 @@ alternative-conceptions-study/
 | Asteroids are small planets | 58.0% | 26.0% | 32.0% |
 | Planets glow like stars | 49.0% | 21.3% | 27.7% |
 
-### Gain Distribution
-- **High gain (g > 0.7):** 33.3% of students
-- **Medium gain (0.3 ≤ g ≤ 0.7):** 38.0% of students  
-- **Low gain (g < 0.3):** 28.7% of students
-- **Strong negative correlation:** Pre-test score vs. normalized gain (r = -0.550, p < 0.001)
+### Normalized Gain Distribution (Hake, 1998)
+- **High gain (g > 0.7):** 50 students (33.3%)
+- **Medium gain (0.3 ≤ g ≤ 0.7):** 57 students (38.0%)
+- **Low gain (g < 0.3):** 43 students (28.7%)
+- **Pre-test vs normalized gain:** r = -0.306, p = 0.0001
 
 ---
 

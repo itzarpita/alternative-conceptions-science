@@ -11,5 +11,8 @@ hedges_g,1.221197782966223
 improved_pct,88.0
 same_pct,2.666666666666667
 declined_pct,9.333333333333334
-normalized_gain_mean,0.4698174603174603
+normalized_gain_mean_individual,0.4698174603174603
+normalized_gain_mean_class,0.5102040816326531
 correlation_pre_gain,-0.5502884697451288
+correlation_pre_normalized_gain,-0.3064326886782756
+p_value_pre_normalized_gain,0.00013685302927893972
