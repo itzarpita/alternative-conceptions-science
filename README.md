@@ -1,5 +1,9 @@
 # Alternative Conceptions in Elementary Science
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18791134.svg)](https://doi.org/10.5281/zenodo.18791134)
+
+**Archived version used in the revised manuscript (v1.1).**
+
 ## Overview
 This repository contains a complete, reproducible analysis of a classroom-based study titled:
 
