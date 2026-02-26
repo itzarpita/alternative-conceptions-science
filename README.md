@@ -216,14 +216,14 @@ This repository is released under the MIT License. See LICENSE for details.
 
 This repository is archived on Zenodo and assigned DOIs for citation and long-term preservation.
 
-**Version DOI (v1.1 – used for manuscript submission):**  
-https://doi.org/10.5281/zenodo.18062669  
+**Version DOI (v1.1 – manuscript revision used for submission):**  
+https://doi.org/10.5281/zenodo.18791134  
 
-This DOI refers to the exact version of the code, data, and analysis used in the submitted manuscript and should be cited for reproducibility and peer review.
+This DOI refers to the exact frozen snapshot of the code, data, and analysis used in the revised manuscript and should be cited for reproducibility and peer review.
 
 **Concept DOI (all versions):**  
 https://doi.org/10.5281/zenodo.18060218  
 
 The concept DOI always resolves to the latest version of this repository.
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18062669.svg)](https://doi.org/10.5281/zenodo.18062669)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18791134.svg)](https://doi.org/10.5281/zenodo.18791134)
