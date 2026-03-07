@@ -378,11 +378,28 @@ def main(pre_path, post_path, out_dir):
     # Keep matrix readable: totals + items + gain
     corr_cols = ["pre_total", "post_total"] + pre_items + post_items + ["gain"]
     corr_cols = [c for c in corr_cols if c in merged_all_items.columns]
+    corr = merged_all_items[corr_cols].corr(method="pearson")
+
+    # Save full correlation matrix for reproducibility/public sharing
+    corr_rounded = corr.round(3)
+    corr_rounded.to_csv(os.path.join(reports, "correlation_matrix_full.csv"), index=True)
+
+    # GitHub-friendly markdown version (no optional dependencies required)
+    md_path = os.path.join(reports, "correlation_matrix_full.md")
+    headers = ["Variable"] + list(corr_rounded.columns)
+    with open(md_path, "w", encoding="utf-8") as f:
+        f.write("# Full Pearson Correlation Matrix\n\n")
+        f.write("Rows/columns include totals, all pre/post items, and raw gain.\n\n")
+        f.write("| " + " | ".join(headers) + " |\n")
+        f.write("|" + "|".join(["---"] * len(headers)) + "|\n")
+        for idx, row in corr_rounded.iterrows():
+            vals = []
+            for v in row.tolist():
+                vals.append("NA" if pd.isna(v) else f"{float(v):.3f}")
+            f.write("| " + " | ".join([str(idx)] + vals) + " |\n")
 
     # Only render if size is manageable for a single-page figure
     if len(corr_cols) <= 22:
-        corr = merged_all_items[corr_cols].corr(method="pearson")
-
         # Wider figure and a full-height colorbar axis so the colorbar is not squashed.
         fig = plt.figure(figsize=(14, 10))
         ax = fig.add_axes([0.08, 0.08, 0.72, 0.84])  # main heatmap area
@@ -472,14 +489,24 @@ def main(pre_path, post_path, out_dir):
 
     plt.figure(figsize=(10, 6))
     data = [merged[merged["pre_quartile"] == q]["normalized_gain"] for q in ["Q1", "Q2", "Q3", "Q4"]]  # NOW CORRECT
-    plt.boxplot(data, labels=["Lowest 25%", "25-50%", "50-75%", "Highest 25%"])
+    plt.boxplot(
+        data,
+        labels=["Lowest 25%", "25-50%", "50-75%", "Highest 25%"],
+        patch_artist=True,
+        boxprops=dict(facecolor="white", edgecolor="black", linewidth=1.2),
+        medianprops=dict(color="black", linewidth=1.6),
+        whiskerprops=dict(color="black", linewidth=1.1),
+        capprops=dict(color="black", linewidth=1.1),
+        flierprops=dict(marker='o', markerfacecolor='white', markeredgecolor='black', markersize=5, linestyle='none')
+    )
     plt.xlabel("Pre-test performance quartile")
-    plt.axhline(y=0.3, color='orange', linestyle='--', alpha=0.5, label='Medium gain threshold')
-    plt.axhline(y=0.7, color='green', linestyle='--', alpha=0.5, label='High gain threshold')
+    # Print-friendly colors: visible in color print without dominating the figure
+    plt.axhline(y=0.3, color='#B35A00', linestyle=(0, (6, 2)), linewidth=2.0, alpha=0.9, label='Medium gain threshold (g = 0.3)')
+    plt.axhline(y=0.7, color='#2E8B57', linestyle=(0, (2, 2)), linewidth=2.0, alpha=0.9, label='High gain threshold (g = 0.7)')
     plt.ylabel("Normalized gain (g)")
     # Removed title to avoid redundancy with caption
-    plt.legend()
-    plt.grid(True, alpha=0.3)
+    plt.legend(frameon=True, facecolor='white', edgecolor='black')
+    plt.grid(True, color='0.85', linewidth=0.9)
     plt.tight_layout()
     plt.savefig(os.path.join(figs, "boxplot_normalized_gain_by_quartile.png"), dpi=300)
     plt.close()
